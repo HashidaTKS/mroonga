@@ -67,7 +67,7 @@ jobs:
           curl --location -O https://downloads.mariadb.org/f/mariadb-${{ matrix.mariadb-version}}/source/mariadb-${{ matrix.mariadb-version}}.tar.gz
           tar xzf mariadb-${{ matrix.mariadb-version}}.tar.gz
           cd mariadb-${{ matrix.mariadb-version}}
-          if "%MARIADB_VERSION:~,5%" == "10.5." (
+          if "${{ matrix.mariadb-version}}:~,5%" == "10.5." (
             patch -p1 < ..\mroonga\packages\source\patches\mariadb-10.5.5-add-a-missing-export-symbol.diff
           )
           rmdir /S /Q storage\mroonga\
