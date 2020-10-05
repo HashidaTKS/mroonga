@@ -1,0 +1,109 @@
+name: "Windows"
+on:
+  - push
+  - pull_request
+jobs:
+  build:
+    name: Build
+    strategy:
+      fail-fast: false
+      matrix:
+        label:
+          - MariaDB 10.2.33 x86
+          - MariaDB 10.2.33 x64
+          - MariaDB 10.3.24 x86
+          - MariaDB 10.3.24 x64
+          - MariaDB 10.4.14 x86
+          - MariaDB 10.4.14 x64
+          - MariaDB 10.5.5 x86
+          - MariaDB 10.5.5 x64
+        include:
+          - label: MariaDB 10.2.33 x86
+            architecture: x86
+            cmake-architecture: Win32
+            cmake-generator: Visual Studio 16 2019
+            vc-architecture: x64_x86
+            vc-toolset-version: 142
+            vs-version: 2019
+	    mariadb-version: 10.2.33
+	    mroonga-platform: win32
+          - label: MariaDB 10.2.33 x64
+            architecture: x64
+            cmake-architecture: x64
+            cmake-generator: Visual Studio 16 2019
+            vc-architecture: x64
+            vc-toolset-version: 142
+            vs-version: 2019
+	    mariadb-version: 10.2.33
+	    mroonga-platform: winx64
+    runs-on: windows-2019
+    steps:
+      - name: Disable crash dialog
+        run: |
+          reg add "HKCU\SOFTWARE\Microsoft\Windows\Windows Error Reporting" `
+            /v DontShowUI `
+            /t REG_DWORD `
+            /d 1 `
+            /f
+      - name: Use JST
+        run: |
+          Set-TimeZone -Id "Tokyo Standard Time"
+      - uses: actions/checkout@v2
+        with:
+          submodules: recursive
+      - uses: msys2/setup-msys2@v2
+        with:
+          install: git patch curl
+      - name: Install dependencies
+        run: |
+	  set PATH=C:\Ruby26-x64\bin;%PATH%
+	  set PATH=C:\msys64\usr\bin;%PATH%
+	  curl --remote-name https://repo.msys2.org/msys/x86_64/msys2-keyring-r21.b39fb11-1-any.pkg.tar.xz
+	  pacman --noconfirm --upgrade msys2-keyring-r21.b39fb11-1-any.pkg.tar.xz
+	  pacman --sync --refresh --sysupgrade --sysupgrade --noconfirm
+	  taskkill /F /FI "MODULES eq msys-2.0.dll"
+	  pacman --sync --noconfirm p7zip
+#         if "%USE_MASTER%" == "yes" (
+#           call
+#             "C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Auxiliary\Build\vcvarsall.bat"
+#             amd64
+#         )
+          cd ..
+          curl --location -O https://downloads.mariadb.org/f/mariadb-${{ matrix.mariadb-version}}/source/mariadb-${{ matrix.mariadb-version}}.tar.gz
+          tar xzf mariadb-${{ matrix.mariadb-version}}.tar.gz
+          cd mariadb-${{ matrix.mariadb-version}}
+          if "%MARIADB_VERSION:~,5%" == "10.5." (
+            patch -p1 < ..\mroonga\packages\source\patches\mariadb-10.5.5-add-a-missing-export-symbol.diff
+          )
+          rmdir /S /Q storage\mroonga\
+          ::set-env name=MROONGA_VERSION::"$(Get-Content ..\mroonga\version)"
+          move ..\mroonga storage\mroonga
+#          if "%USE_MASTER%" == "yes" (
+#            git clone --quiet --depth 1 --recursive https://github.com/groonga/groonga.git ..\groonga &&
+#            cd ..\groonga\vendor &&
+#            ruby download_lz4.rb &&
+#            ruby download_mecab.rb &&
+#            ruby download_message_pack.rb &&
+#            ruby download_rapidjson.rb &&
+#            cd ..\..\mariadb-%MARIADB_VERSION%
+#          ) else (
+            curl -O https://packages.groonga.org/source/groonga/groonga-latest.zip &&
+            7z x groonga-latest.zip &&
+            del groonga-latest.zip &&
+            move groonga-* ..\groonga
+#          )
+          rmdir /S /Q ..\groonga\test\
+          mkdir storage\mroonga\vendor
+          move ..\groonga storage\mroonga\vendor\groonga
+#          if "%USE_MASTER%" == "yes" (
+#            git clone --quiet --depth 1
+#              https://github.com/groonga/groonga-normalizer-mysql.git
+#              storage\mroonga\vendor\groonga\vendor\plugins\groonga-normalizer-mysql
+#          ) else (
+            curl -O https://packages.groonga.org/source/groonga-normalizer-mysql/groonga-normalizer-mysql-latest.zip &&
+            7z x groonga-normalizer-mysql-latest.zip &&
+            del groonga-normalizer-mysql-latest.zip &&
+            move
+              groonga-normalizer-mysql*
+              storage\mroonga\vendor\groonga\vendor\plugins\groonga-normalizer-mysql
+#          )
