@@ -63,11 +63,6 @@ jobs:
           pacman --sync --refresh --sysupgrade --sysupgrade --noconfirm
           taskkill /F /FI "MODULES eq msys-2.0.dll"
           pacman --sync --noconfirm p7zip
-#         if "%USE_MASTER%" == "yes" (
-#           call
-#             "C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Auxiliary\Build\vcvarsall.bat"
-#             amd64
-#         )
           cd ..
           curl --location -O https://downloads.mariadb.org/f/mariadb-${{ matrix.mariadb-version}}/source/mariadb-${{ matrix.mariadb-version}}.tar.gz
           tar xzf mariadb-${{ matrix.mariadb-version}}.tar.gz
@@ -78,32 +73,16 @@ jobs:
           rmdir /S /Q storage\mroonga\
           ::set-env name=MROONGA_VERSION::"$(Get-Content ..\mroonga\version)"
           move ..\mroonga storage\mroonga
-#          if "%USE_MASTER%" == "yes" (
-#            git clone --quiet --depth 1 --recursive https://github.com/groonga/groonga.git ..\groonga &&
-#            cd ..\groonga\vendor &&
-#            ruby download_lz4.rb &&
-#            ruby download_mecab.rb &&
-#            ruby download_message_pack.rb &&
-#            ruby download_rapidjson.rb &&
-#            cd ..\..\mariadb-%MARIADB_VERSION%
-#          ) else (
-            curl -O https://packages.groonga.org/source/groonga/groonga-latest.zip &&
-            7z x groonga-latest.zip &&
-            del groonga-latest.zip &&
-            move groonga-* ..\groonga
-#          )
+          curl -O https://packages.groonga.org/source/groonga/groonga-latest.zip &&
+          7z x groonga-latest.zip &&
+          del groonga-latest.zip &&
+          move groonga-* ..\groonga
           rmdir /S /Q ..\groonga\test\
           mkdir storage\mroonga\vendor
           move ..\groonga storage\mroonga\vendor\groonga
-#          if "%USE_MASTER%" == "yes" (
-#            git clone --quiet --depth 1
-#              https://github.com/groonga/groonga-normalizer-mysql.git
-#              storage\mroonga\vendor\groonga\vendor\plugins\groonga-normalizer-mysql
-#          ) else (
-            curl -O https://packages.groonga.org/source/groonga-normalizer-mysql/groonga-normalizer-mysql-latest.zip &&
-            7z x groonga-normalizer-mysql-latest.zip &&
-            del groonga-normalizer-mysql-latest.zip &&
-            move
-              groonga-normalizer-mysql*
-              storage\mroonga\vendor\groonga\vendor\plugins\groonga-normalizer-mysql
-#          )
+          curl -O https://packages.groonga.org/source/groonga-normalizer-mysql/groonga-normalizer-mysql-latest.zip &&
+          7z x groonga-normalizer-mysql-latest.zip &&
+          del groonga-normalizer-mysql-latest.zip &&
+          move
+            groonga-normalizer-mysql*
+            storage\mroonga\vendor\groonga\vendor\plugins\groonga-normalizer-mysql
