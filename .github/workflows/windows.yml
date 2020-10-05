@@ -25,8 +25,8 @@ jobs:
             vc-architecture: x64_x86
             vc-toolset-version: 142
             vs-version: 2019
-	    mariadb-version: 10.2.33
-	    mroonga-platform: win32
+            mariadb-version: 10.2.33
+            mroonga-platform: win32
           - label: MariaDB 10.2.33 x64
             architecture: x64
             cmake-architecture: x64
@@ -34,8 +34,8 @@ jobs:
             vc-architecture: x64
             vc-toolset-version: 142
             vs-version: 2019
-	    mariadb-version: 10.2.33
-	    mroonga-platform: winx64
+            mariadb-version: 10.2.33
+            mroonga-platform: winx64
     runs-on: windows-2019
     steps:
       - name: Disable crash dialog
@@ -56,13 +56,13 @@ jobs:
           install: git patch curl
       - name: Install dependencies
         run: |
-	  set PATH=C:\Ruby26-x64\bin;%PATH%
-	  set PATH=C:\msys64\usr\bin;%PATH%
-	  curl --remote-name https://repo.msys2.org/msys/x86_64/msys2-keyring-r21.b39fb11-1-any.pkg.tar.xz
-	  pacman --noconfirm --upgrade msys2-keyring-r21.b39fb11-1-any.pkg.tar.xz
-	  pacman --sync --refresh --sysupgrade --sysupgrade --noconfirm
-	  taskkill /F /FI "MODULES eq msys-2.0.dll"
-	  pacman --sync --noconfirm p7zip
+          set PATH=C:\Ruby26-x64\bin;%PATH%
+          set PATH=C:\msys64\usr\bin;%PATH%
+          curl --remote-name https://repo.msys2.org/msys/x86_64/msys2-keyring-r21.b39fb11-1-any.pkg.tar.xz
+          pacman --noconfirm --upgrade msys2-keyring-r21.b39fb11-1-any.pkg.tar.xz
+          pacman --sync --refresh --sysupgrade --sysupgrade --noconfirm
+          taskkill /F /FI "MODULES eq msys-2.0.dll"
+          pacman --sync --noconfirm p7zip
 #         if "%USE_MASTER%" == "yes" (
 #           call
 #             "C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Auxiliary\Build\vcvarsall.bat"
