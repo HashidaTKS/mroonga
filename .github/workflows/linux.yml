@@ -1,0 +1,117 @@
+name: Linux
+on:
+  - push
+  - pull_request
+jobs:
+  test:
+    name: Test
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - debian-buster
+          - debian-buster-i386
+          - centos-7
+          - centos-8
+        package:
+          - mariadb-server-10.2
+          - mariadb-server-10.3
+          - mariadb-server-10.4
+          - mariadb-server-10.5
+          - mysql-server-5.7
+          - mysql-server-8.0
+          - percona-server-5.7
+          - percona-server-8.0
+        exclude:
+          - os: debian-buster
+            package: mariadb-server-10.2
+          - os: debian-buster-i386
+            package: mariadb-server-10.2
+          - os: centos-8
+            package: mariadb-server-10.2
+          - os: debian-buster
+            package: mariadb-server-10.4
+          - os: debian-buster-i386
+            package: mariadb-server-10.4
+          - os: debian-buster
+            package: mariadb-server-10.5
+          - os: debian-buster-i386
+            package: mariadb-server-10.5
+          - os: debian-buster
+            package: mysql-server-5.7
+          - os: debian-buster-i386
+            package: mysql-server-5.7
+          - os: centos-8
+            package: mysql-server-5.7
+          - os: debian-buster
+            package: mysql-server-8.0
+          - os: debian-buster-i386
+            package: mysql-server-8.0
+          - os: debian-buster
+            package: percona-server-5.7
+          - os: debian-buster-i386
+            package: percona-server-5.7
+          - os: centos-8
+            package: percona-server-5.7
+          - os: debian-buster
+            package: percona-server-8.0
+          - os: debian-buster-i386
+            package: percona-server-8.0
+    runs-on: ubuntu-latest
+    steps:
+      - name: Remove needless data
+        run: |
+          sudo rm -rf /opt
+      - uses: actions/checkout@v2
+      - name: Install dependencies
+        run: |
+          grep '^deb ' /etc/apt/sources.list | \
+            sed -e 's/^deb /deb-src /' | \
+            sudo tee /etc/apt/sources.list.d/source.list
+          sudo apt update
+          sudo apt -y -V install software-properties-common
+          sudo add-apt-repository -y ppa:groonga/ppa
+          sudo apt update
+          sudo apt -y -V install \
+            autoconf \
+            gettext \
+            groonga-normalizer-mysql \
+            libgroonga-dev \
+            libmysqld-dev \
+            libtool \
+            python3-pip \
+            ruby
+      - name: Install Sphinx
+        run: |
+          sudo pip3 install -v sphinx
+      - name: Download MySQL source
+        run: |
+          mkdir -p ../mysql
+          cd ../mysql
+          apt source mysql-server
+          ln -s $(find . -maxdepth 1 -type d | sort | tail -1) mysql
+      - name: Clone dependencies
+        run: |
+          cd ..
+          git clone --depth 1 --recursive https://github.com/groonga/groonga.git
+          git clone --depth 1 https://github.com/clear-code/cutter.git
+          git clone --depth 1 https://github.com/mroonga/mroonga.github.com.git
+      - name: Generate configure
+        run: |
+          ./autogen.sh
+      - name: Configure for archive
+        run: |
+          ./configure \
+            --enable-document \
+            --with-cutter-source-path=../cutter \
+            --with-mroonga-github-com-path=../mroonga.github.com \
+            --with-mysql-source=../mysql/mysql
+      - name: Build
+        run: |
+          make -j$(nproc)
+      - name: "Test: Unit"
+        run: |
+          bash -x test/run-unit-test.sh
+      - name: "Test: SQL"
+        run: |
+          bash -x test/run-sql-test.sh
