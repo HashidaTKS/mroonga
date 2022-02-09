@@ -28,7 +28,7 @@ CREATE TABLE ids (
 
 INSERT INTO ids (id1, id2) values (1, 2), (1, 2);
 
---error ER_DUP_UNIQUE
+--error ER_DUP_ENTRY
 ALTER TABLE ids ADD UNIQUE INDEX (id1, id2);
 --replace_regex /int\([0-9]+\)/int/
 SHOW CREATE TABLE ids;
